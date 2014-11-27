@@ -79,7 +79,7 @@ class WebSocket
 	private var opcode:Opcode;
 	private var frameIsBinary:Bool;
 	private var partialLength:Int;
-	private var length:Int;
+	private var length:UInt;
 	private var mask:Int;
 	private var httpHeader:String = "";
 	private var lastPong:Date = null;
@@ -109,11 +109,15 @@ class WebSocket
 					var b0 = socket.readByte();
 					var b1 = socket.readByte();
 					
-					isFinal = ((b0 >> 7) & 1) != 0;
-					opcode = cast(((b0 >> 0) & 7), Opcode);
+					//isFinal = ((b0 >> 7) & 1) != 0;
+					//opcode = cast(((b0 >> 0) & 7), Opcode);
+          isFinal = cast(b0 & 0x80, Bool);
+          opcode = cast(b0 & 0x0F, Opcode);
 					frameIsBinary = if (opcode == Opcode.Text) false; else if (opcode == Opcode.Binary) true; else frameIsBinary;
-					partialLength = ((b1 >> 0) & 0x7F);
-					isMasked = ((b1 >> 7) & 1) != 0;
+					//partialLength = ((b1 >> 0) & 0x7F);
+					//isMasked = ((b1 >> 7) & 1) != 0;
+          partialLength = b1 & 0x7F;
+          isMasked = cast(b1 & 0x80, Bool);
 					
 					state = State.HeadExtraLength;
 				case State.HeadExtraLength:
@@ -184,6 +188,7 @@ class WebSocket
 			"Sec-WebSocket-Key: " + Base64.encode(Bytes.ofString(key)),
 			'Origin: ${origin}',
 			'User-Agent:Mozilla/5.0',
+      'sec-websocket-protocol:json-rpc'
 		];
 		
 		var ba = new ByteArray();
