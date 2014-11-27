@@ -111,13 +111,13 @@ class WebSocket
           
           //isFinal = ((b0 >> 7) & 1) != 0;
           //opcode = cast(((b0 >> 0) & 7), Opcode);
-          isFinal = cast(b0 & 0x80, Bool);
+          isFinal = b0 & 0x80 != 0;
           opcode = cast(b0 & 0x0F, Opcode);
           frameIsBinary = if (opcode == Opcode.Text) false; else if (opcode == Opcode.Binary) true; else frameIsBinary;
           //partialLength = ((b1 >> 0) & 0x7F);
           //isMasked = ((b1 >> 7) & 1) != 0;
           partialLength = b1 & 0x7F;
-          isMasked = cast(b1 & 0x80, Bool);
+          isMasked = b1 & 0x80 != 0;
           
           state = State.HeadExtraLength;
         case State.HeadExtraLength:
