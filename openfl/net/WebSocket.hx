@@ -23,6 +23,7 @@ class WebSocket
   private var secure = false;
   private var state = State.Handshake;
   public var slots = new Array<Slot>();
+  static public inline var DEBUG:Bool = true;
 
   public function new(uri:String, origin:String = "http://127.0.0.1/", key:String = "wskey")  {
     this.origin = origin;
@@ -49,6 +50,10 @@ class WebSocket
       handleData();
     });
     connect();
+  }
+
+  private function _debug(msg:String):Void {
+    trace(msg);
   }
   
   private function connect() {
@@ -143,18 +148,22 @@ class WebSocket
 
           switch (opcode) {
             case Opcode.Binary | Opcode.Text | Opcode.Continuation:
+              _debug("Received message, " + "Type: " + opcode);
+              if (isFinal) {
+                payload.position = 0;
+                if (frameIsBinary) emit(payload, true); else emit(payload.readUTFBytes(payload.length), false);
+                payload = null;
+              }
               // do nothing
             case Opcode.Ping:
+              _debug("Received Ping");
               sendFrame(payload, Opcode.Pong);
             case Opcode.Pong:
+              _debug("Received Pong");
               lastPong = Date.now();
             case Opcode.Close:
+              _debug("Socket Closed");
               socket.close();
-          }
-          if (isFinal) {
-            payload.position = 0;
-            if (frameIsBinary) emit(payload, true); else emit(payload.readUTFBytes(payload.length), false);
-            payload = null;
           }
           state = State.Head;
         default:
